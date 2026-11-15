@@ -173,7 +173,11 @@ if [ "$kcal_boot_on" = 1 ]; then
 else
   patch_cmdline "doom.kcal" "doom.kcal=0";
 fi;
-ui_print "  boot cmdline now carries doom.kcal=$kcal_boot_on";
+# Keep the kernel ring buffer large enough that an hour of use does not push
+# early boot out of dmesg: the display/KCal init and any early fault have to
+# survive until the log is collected.
+patch_cmdline "log_buf_len" "log_buf_len=4M";
+ui_print "  boot cmdline: doom.kcal=$kcal_boot_on log_buf_len=4M";
 
 write_boot;
 ### end install
@@ -246,6 +250,8 @@ What this ZIP does:
   - Device check restricts installation to miatoll/curtana/joyeuse/excalibur/gram.
   - Asks, with the volume keys, whether KCal owns the colour block and stores
     that answer in the boot image cmdline (doom.kcal=0|1).
+  - Raises the kernel log buffer to 4 MB (log_buf_len=4M) so that a later
+    dmesg still contains the boot-time messages.
 
 $COLOUR_SECTION
 

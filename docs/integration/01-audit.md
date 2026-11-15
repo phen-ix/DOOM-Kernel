@@ -1,5 +1,10 @@
 # DOOM Kernel — Phase 1 miatoll / VoltageOS 6.2 integration audit
 
+> **Historical snapshot.** Toolchain, branch and repository names below are the
+> ones in use on the audit date; the build now uses LLVM/Clang 22.1.8, one KCal
+> build and a flash-time colour choice. See `04-build-and-download.md` for the
+> current process.
+
 Audit date: 2026-10-31. **Status: integration gate passed, with device-validation conditions.**
 
 This is a custom-kernel feasibility audit, not an Android compatibility certification. A successful build does not establish boot, display, scheduler, root, networking, CDD, CTS or VTS compliance. No device tests have been performed.
@@ -8,9 +13,9 @@ This is a custom-kernel feasibility audit, not an Android compatibility certific
 
 | Item | Finding |
 |---|---|
-| Repository | `phen-ix/kernel` |
+| Repository | `phen-ix/new` (the audit was written against `phen-ix/kernel`) |
 | Original branch | `16`; left unchanged |
-| Working branch | `arena/2197b6cf-kernel` |
+| Working branch at audit time | `arena/2197b6cf-kernel` (current: `arena/4ccf21b5-new`) |
 | Starting commit | `4afc6f0769f0f3b2b10d50d3fa02f0ba7c89a183` |
 | Kernel | Linux **4.14.357-openela**, ARM64 |
 | Published history | No tags, releases or Actions workflows at the audit snapshot; only branch `16` was advertised by the remote |

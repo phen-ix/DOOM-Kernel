@@ -107,6 +107,9 @@ kernel reads it in `__setup()` before any display code runs, so it applies from
 the first frame, persists across reboots, and is rewritten on every flash — a
 reflash can never resurrect a stale value.
 
+The installer also sets `log_buf_len=4M`, so an hour of use does not push the
+boot-time messages (display/KCal init, early faults) out of `dmesg`.
+
 Check after booting:
 
 ```bash
@@ -125,6 +128,24 @@ echo 0 > /sys/devices/platform/kcal_ctrl.0/kcal_enable   # ROM owns colour
 The remaining nodes are `kcal` (`"R G B"` gains, 256 = neutral), `kcal_min`
 (minimum gain, 20), `kcal_hue`, `kcal_sat`, `kcal_val` and `kcal_cont`. The
 platform device registers as id 0, hence the `.0` suffix.
+
+## Turning verbose driver logs back on (no rebuild needed)
+
+The build compiles verbose messages out of the noisy drivers instead of
+deleting them. `CONFIG_DYNAMIC_DEBUG=y` keeps every `pr_debug()`/`dev_dbg()`
+call in the binary but silent, controllable at runtime:
+
+```bash
+su
+grep 'qpnp-qg' /proc/dynamic_debug/control          # see the call sites
+echo 'file qpnp-qg.c +p' > /proc/dynamic_debug/control
+dmesg | grep -i 'soc:'                             # now visible
+echo 'file qpnp-qg.c -p' > /proc/dynamic_debug/control
+```
+
+Applies to `qpnp-qg.c`, `qg-util.c`, `smb1398-charger.c` and `q6afe.c`. The
+control file lives in `/proc/dynamic_debug/control`; mounting debugfs is not
+required and the messages stay off until root enables them.
 
 ## Local raw outputs (not published)
 

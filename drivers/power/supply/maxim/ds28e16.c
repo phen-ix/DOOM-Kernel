@@ -35,12 +35,12 @@
 #ifdef CONFIG_TARGET_PROJECT_J20C
 #define ds_info	pr_err
 #define ds_dbg	pr_err
-#define ds_err	pr_err
+#define ds_err	pr_err_ratelimited
 #define ds_log	pr_err
 #else
 #define ds_info	pr_debug
 #define ds_dbg	pr_debug
-#define ds_err	pr_err
+#define ds_err	pr_err_ratelimited
 #define ds_log	pr_debug
 #endif
 

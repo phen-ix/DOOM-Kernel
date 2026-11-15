@@ -2320,7 +2320,7 @@ int afe_tas_smartamp_get_calib_data(uint32_t module_id, uint32_t param_id,
         pr_err("[TI-SmartPA:%s] Invalid module id 0x%x\n", __func__, module_id);
         goto fail_cmd;
     }
-    pr_err("[TI-SmartPA:%s] port = 0x%x\n", __func__, port);
+    pr_debug("[TI-SmartPA:%s] port = 0x%x\n", __func__, port);
 
     memset(&param_hdr, 0, sizeof(param_hdr));
     param_hdr.module_id = module_id;
@@ -2353,13 +2353,13 @@ int afe_tas_smartamp_set_calib_data(uint32_t module_id, uint32_t param_id,
     u8 *packed_param_data = NULL;
     u32 packed_param_size = 0;
     u32 single_param_size = 0;
-    pr_info("[TI-SmartPA:%s] length: %d\n", __func__, length);
+    pr_debug("[TI-SmartPA:%s] length: %d\n", __func__, length);
     if (!data || (length < 0)) {
         pr_err("[TI-SmartPA:%s] Invalid params\n", __func__);
         return ret;
     }
 
-    pr_info("[TI-SmartPA:%s] module id : 0x%x \n", __func__, module_id);
+    pr_debug("[TI-SmartPA:%s] module id : 0x%x \n", __func__, module_id);
     if (module_id == AFE_SMARTAMP_MODULE_RX) {
         port = TAS_RX_PORT;
     } else if (module_id == AFE_SMARTAMP_MODULE_TX) {

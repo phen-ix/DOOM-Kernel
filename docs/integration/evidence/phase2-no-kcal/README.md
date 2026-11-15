@@ -1,3 +1,5 @@
+> Historical evidence (Clang 18 / KCal-free era). Kept for the record; the current build is described in `../../../04-build-and-download.md`.
+
 # KCal-free build evidence
 
 The fresh compile captured here ran at KCal removal commit

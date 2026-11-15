@@ -1,3 +1,5 @@
+> Historical evidence (Clang 18 / KCal-free era). Kept for the record; the current build is described in `../../../04-build-and-download.md`.
+
 # Superseded KCal-enabled build evidence
 
 These files record the earlier build at commit `72ccb7e1d`, before the user

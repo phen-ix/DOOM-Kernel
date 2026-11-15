@@ -1,6 +1,9 @@
 # DOOM Kernel — Phase 2 feature integration record
 
-Branch: `arena/2197b6cf-kernel` (original branch `16` untouched).
+Branch: `arena/2197b6cf-kernel` (original branch `16` untouched). This is a
+**historical record** of the Phase 2 integration; the live process is in
+`04-build-and-download.md`, and the Clang 18 / KCal-free references below are
+superseded.
 
 This file records what was changed, why, and what is still **not** proven.
 A successful build is not a runtime guarantee.

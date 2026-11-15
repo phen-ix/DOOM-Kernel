@@ -699,12 +699,23 @@ static u32 psi_group_change(struct psi_group *group, int cpu,
 	for (t = 0, m = clear; m; m &= ~(1 << t), t++) {
 		if (!(m & (1 << t)))
 			continue;
-		if (groupc->tasks[t] == 0 && !psi_bug) {
-			printk_deferred(KERN_ERR "psi: task underflow! cpu=%d t=%d tasks=[%u %u %u] clear=%x set=%x\n",
-					cpu, t, groupc->tasks[0],
-					groupc->tasks[1], groupc->tasks[2],
-					clear, set);
-			psi_bug = 1;
+		if (groupc->tasks[t] == 0) {
+			if (!psi_bug) {
+				printk_deferred(KERN_ERR "psi: task underflow! cpu=%d t=%d tasks=[%u %u %u] clear=%x set=%x\n",
+						cpu, t, groupc->tasks[0],
+						groupc->tasks[1], groupc->tasks[2],
+						clear, set);
+				psi_bug = 1;
+			}
+			/*
+			 * Never decrement below zero: the counts are unsigned, so
+			 * an underflow wraps to UINT_MAX and test_state() then
+			 * reports this cpu as stalled forever. The state mask is
+			 * latched on every following record_times(), which turns
+			 * /proc/pressure/memory into a constant ~100% and can
+			 * never recover, not even across suspend.
+			 */
+			continue;
 		}
 		groupc->tasks[t]--;
 	}
@@ -767,6 +778,15 @@ void psi_task_change(struct task_struct *task, int clear, int set)
 				task->psi_flags, clear, set);
 		psi_bug = 1;
 	}
+
+	/*
+	 * The task's own flags are the source of truth, so only transitions
+	 * that match them are applied: clearing a state the task was never
+	 * charged for corrupts the per-cpu counts (see psi_group_change()),
+	 * and setting one twice makes a task look stalled when it is not.
+	 */
+	clear &= task->psi_flags;
+	set &= ~task->psi_flags;
 
 	task->psi_flags &= ~clear;
 	task->psi_flags |= set;
@@ -854,6 +874,14 @@ void psi_memstall_leave(unsigned long *flags)
 		return;
 
 	if (*flags)
+		return;
+	/*
+	 * A section can be entered while psi is still disabled (nothing is
+	 * charged then, and @flags is left untouched) and be left after psi
+	 * became active. Without this check that leave would clear a memstall
+	 * the task never had.
+	 */
+	if (!(current->flags & PF_MEMSTALL))
 		return;
 	/*
 	 * PF_MEMSTALL clearing & accounting needs to be atomic wrt

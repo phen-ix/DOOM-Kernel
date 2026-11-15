@@ -1590,6 +1590,7 @@ static void cpuset_attach(struct cgroup_taskset *tset)
 	struct cgroup_subsys_state *css;
 	struct cpuset *cs;
 	struct cpuset *oldcs = cpuset_attach_old_cs;
+	int ret;
 
 	cgroup_taskset_first(tset, &css);
 	cs = css_cs(css);
@@ -1608,9 +1609,17 @@ static void cpuset_attach(struct cgroup_taskset *tset)
 	cgroup_taskset_for_each(task, css, tset) {
 		/*
 		 * can_attach beforehand should guarantee that this doesn't
-		 * fail.  TODO: have a better way to handle failure here
+		 * fail, but userspace can write a mask whose cpus have been
+		 * hotplugged out in the meantime. The task then simply keeps
+		 * its previous affinity, which is recoverable, so report it
+		 * instead of dumping a WARN stack trace: on this target the
+		 * ROM updates cpusets from userspace while cpus come and go,
+		 * and a WARN here buries real faults in the log.
 		 */
-		WARN_ON_ONCE(update_cpus_allowed(cs, task, cpus_attach));
+		ret = update_cpus_allowed(cs, task, cpus_attach);
+		if (ret)
+			pr_warn_ratelimited("cpuset: pid %d (%s) keeps its previous affinity, request failed: %d\n",
+					    task->pid, task->comm, ret);
 
 		cpuset_change_task_nodemask(task, &cpuset_attach_nodemask_to);
 		cpuset_update_task_spread_flag(cs, task);

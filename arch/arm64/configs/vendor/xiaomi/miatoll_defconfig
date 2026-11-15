@@ -16,6 +16,9 @@ CONFIG_RCU_NOCB_CPU=y
 CONFIG_IKCONFIG=y
 CONFIG_IKCONFIG_PROC=y
 CONFIG_LOG_BUF_SHIFT=20
+# Keep pr_debug()/dev_dbg() calls in the binary but silent by default so
+# they can be enabled at runtime via /proc/dynamic_debug/control.
+CONFIG_DYNAMIC_DEBUG=y
 CONFIG_PELT_UTIL_HALFLIFE_16=y
 CONFIG_CGROUPS=y
 CONFIG_BLK_CGROUP=y
