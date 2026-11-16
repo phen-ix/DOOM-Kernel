@@ -104,6 +104,7 @@
 #include <linux/cpuidle.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
+#include <linux/pm_qos.h>
 #include <linux/sched/clock.h>
 #include <linux/tick.h>
 
@@ -328,6 +329,15 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	bool alt_intercepts, alt_recent;
 	s64 duration_us;
 	int i;
+
+	/*
+	 * A CPU device with no PM QoS request reports 0 here, and this tree
+	 * documents 0 as "no restriction" (see menu_select()).  teo uses the
+	 * value as a hard cap on exit latency, so a 0 would reject every state
+	 * deeper than the shallowest one and the CPU would never leave C0.
+	 */
+	if (latency_req <= 0)
+		latency_req = PM_QOS_LATENCY_ANY;
 
 	if (dev->last_state_idx >= 0) {
 		teo_update(drv, dev);
