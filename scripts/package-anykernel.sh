@@ -147,24 +147,17 @@ PATCH_VBMETA_FLAG=0;
 ui_print "Installing DOOM Kernel for miatoll";
 
 ui_print " ";
-ui_print "  Colour control (KCal) - pick with the volume keys:";
-ui_print "    VOL UP   = KCal ON   (KCal drives hue / sat / val / contrast)";
-ui_print "    VOL DOWN = KCal OFF  (stock colour path, ROM LiveDisplay works)";
-ui_print "    no key within 10s -> KCal OFF (live toggle: echo 1 > .../kcal_enable)";
+ui_print "  KCal: VOL UP = ON | VOL DOWN or no key = OFF (10s)";
 kcal_boot_on=0;
 if [ -e /sdcard/doom_kcal_on ] || [ -e "$DIR/doom_kcal_on" ]; then
   kcal_boot_on=1;
-  ui_print "  /sdcard/doom_kcal_on found -> KCal ON";
 elif command -v getevent >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then
-  ui_print "  waiting 10s for a volume key ...";
   kcal_key=$(timeout 10 getevent -lq 2>/dev/null | grep -m1 -E 'KEY_VOLUMEUP|KEY_VOLUMEDOWN');
   case "$kcal_key" in
     *KEY_VOLUMEUP*) kcal_boot_on=1 ;;
   esac;
-else
-  ui_print "  getevent/timeout unavailable, using the default (KCal OFF)";
 fi;
-ui_print "  KCal at boot: $([ "$kcal_boot_on" = 1 ] && echo ON || echo OFF)";
+ui_print "  KCal: $([ "$kcal_boot_on" = 1 ] && echo ON || echo OFF)";
 
 dump_boot;
 
@@ -177,7 +170,6 @@ fi;
 # early boot out of dmesg: the display/KCal init and any early fault have to
 # survive until the log is collected.
 patch_cmdline "log_buf_len" "log_buf_len=4M";
-ui_print "  boot cmdline: doom.kcal=$kcal_boot_on log_buf_len=4M";
 
 write_boot;
 ### end install
