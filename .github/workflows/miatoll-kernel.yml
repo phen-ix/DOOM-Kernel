@@ -32,7 +32,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          # 30 commits of history instead of the default 1: the release notes
+          # render the kernel changelog from `git log`, and the commit the last
+          # release was built from has to be reachable for that range to work.
+          fetch-depth: 30
 
       - name: Install host build dependencies
         run: |
@@ -118,6 +121,27 @@ jobs:
           sum="$(cut -d' ' -f1 "$zip.sha256")"
           url="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/$asset"
 
+          # Kernel changelog for the release page. `previous` is the commit the
+          # already published release was built from, read back out of its own
+          # notes; if that commit is not in this checkout the notes still show
+          # the newest commits instead of printing nothing.
+          previous="$(gh release view "$tag" --json body --jq .body 2>/dev/null |
+            sed -n 's/^Automatic build of `\([0-9a-f]\{7,40\}\)`.*/\1/p' | head -1 || true)"
+          if [ -n "${previous:-}" ] &&
+             git cat-file -e "${previous}^{commit}" 2>/dev/null; then
+            new_changes="$(git log --no-merges --pretty='- %s — `%h`' \
+              "$previous..HEAD" | grep -vF '[skip ci]' | head -40 || true)"
+            [ -n "$new_changes" ] ||
+              new_changes='- (no new commits since the last build)'
+          else
+            new_changes='- (previous build commit is not in this checkout)'
+          fi
+          # Only the subject line is filtered: a `[skip ci]` commit is one that
+          # never entered a build, so it does not belong in the changelog.
+          recent="$(git log -10 --no-merges --pretty='- %s — `%h`' |
+            grep -vF '[skip ci]' || true)"
+          [ -n "$recent" ] || recent='- unavailable'
+
           {
             echo "Automatic build of \`$GITHUB_SHA\`."
             echo
@@ -126,6 +150,14 @@ jobs:
             echo "| \`$asset\` | \`$sum\` |"
             echo
             echo "Direct download: <$url>"
+            echo
+            echo "## What is new in this build"
+            echo
+            echo "$new_changes"
+            echo
+            echo "## Latest kernel changes"
+            echo
+            echo "$recent"
             echo
             echo "Flash it from a custom recovery (TWRP / OrangeFox / Lineage"
             echo "Recovery). The installer asks with the volume keys whether KCal"
