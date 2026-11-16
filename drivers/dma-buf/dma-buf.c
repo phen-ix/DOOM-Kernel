@@ -1500,6 +1500,7 @@ static int dma_procs_debug_show(struct seq_file *s, void *unused)
 	int ret = 0;
 	struct dma_proc *tmp, *n;
 	LIST_HEAD(plist);
+	LIST_HEAD(dead);
 
 	rcu_read_lock();
 	for_each_process(task) {
@@ -1529,9 +1530,19 @@ static int dma_procs_debug_show(struct seq_file *s, void *unused)
 		list_add(&tmp->head, &plist);
 		continue;
 skip:
-		free_proc(tmp);
+		/*
+		 * free_proc() drops the last file reference, and fput() may
+		 * sleep (dma_buf_release() is allowed to). Defer it until
+		 * the RCU read section is over.
+		 */
+		list_add(&tmp->head, &dead);
 	}
 	rcu_read_unlock();
+
+	list_for_each_entry_safe(tmp, n, &dead, head) {
+		list_del(&tmp->head);
+		free_proc(tmp);
+	}
 
 	list_sort(NULL, &plist, proccmp);
 	list_for_each_entry(tmp, &plist, head)
