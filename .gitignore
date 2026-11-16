@@ -136,3 +136,8 @@ out/
 
 # Local downloadable packages; repository artifacts are uploaded by CI.
 /downloads/
+
+# DOOM Kernel — local working files
+*.zip
+log/
+docs/reports/
