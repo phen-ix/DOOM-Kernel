@@ -5,7 +5,9 @@ on:
     branches:
       - 'arena/**'
       - '16'
-  pull_request:
+  # No pull_request trigger on purpose: a PR must never start a 21-minute
+  # build. Builds happen on a push that carries [skip ci] deliberately, or
+  # from workflow_dispatch.
   workflow_dispatch:
 
 permissions:
