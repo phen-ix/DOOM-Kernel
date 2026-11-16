@@ -10,6 +10,7 @@
 
 #include <linux/cpu.h>
 #include <linux/cpuidle.h>
+#include <linux/err.h>
 #include <linux/mutex.h>
 #include <linux/pm_qos.h>
 
@@ -105,7 +106,20 @@ int cpuidle_governor_latency_req(unsigned int cpu)
 {
 	int global_req = pm_qos_request_for_cpu(PM_QOS_CPU_DMA_LATENCY, cpu);
 	struct device *device = get_cpu_device(cpu);
-	int device_req = dev_pm_qos_raw_read_value(device);
+	int device_req;
+
+	/*
+	 * A CPU device without a PM QoS object has no resume latency
+	 * constraint, but dev_pm_qos_raw_read_value() reports 0 for that.
+	 * The menu governor treats 0 as "no limit" explicitly, while teo
+	 * compares the value against exit_latency directly, so a 0 here
+	 * would rule out every idle state whose exit latency is non-zero,
+	 * that is everything deeper than the shallowest state.
+	 */
+	if (IS_ERR_OR_NULL(device) || IS_ERR_OR_NULL(device->power.qos))
+		device_req = PM_QOS_LATENCY_ANY;
+	else
+		device_req = dev_pm_qos_raw_read_value(device);
 
 	return device_req < global_req ? device_req : global_req;
 }
